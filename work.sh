@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to manage the VPN connection and remote desktop session required for remote work.
+# Script to manage the VPN connection and remote desktop session required for remote work. 
 
 decrypt_rdp_password() {
     RDP_PASSWORD=$(pass surikat/rdp/password)
@@ -23,7 +23,7 @@ connect_vpn() {
     else
         echo "Starting VPN..."
         decrypt_vpn_credentials
-        printf "%sn%sn" "$VPN_USERNAME" "$VPN_PASSWORD" | openvpn3 session-start --config "$VPN_CONFIG_FILE" && echo "VPN started."
+        printf "%s\n%s\n" "$VPN_USERNAME" "$VPN_PASSWORD" | openvpn3 session-start --config "$VPN_CONFIG_FILE" && echo "VPN started."
     fi
 }
 
@@ -54,32 +54,32 @@ start_remote() {
     fi
     echo "Starting remote desktop..."
     decrypt_rdp_password
-    xfreerdp /v:192.168.11.69 /u:linusromland /p:"$RDP_PASSWORD" /f clipboard /d:"" && echo "Remote desktop started."
+    xfreerdp /v:192.168.11.69 /u:linusromland /p:"$RDP_PASSWORD" /f +clipboard /d:"" && echo "Remote desktop started."
 }
 
 case "$1" in
-vpn)
-    case "$2" in
-    connect)
-        connect_vpn
+    vpn)
+        case "$2" in
+            connect)
+                connect_vpn
+                ;;
+            disconnect)
+                disconnect_vpn
+                ;;
+            status)
+                vpn_status
+                ;;
+            *)
+                echo "Usage: $0 vpn {connect|disconnect|status}"
+                exit 1
+                ;;
+        esac
         ;;
-    disconnect)
-        disconnect_vpn
-        ;;
-    status)
-        vpn_status
+    remote)
+        start_remote
         ;;
     *)
-        echo "Usage: $0 vpn {connect|disconnect|status}"
+        echo "Usage: $0 {vpn|remote}"
         exit 1
         ;;
-    esac
-    ;;
-remote)
-    start_remote
-    ;;
-*)
-    echo "Usage: $0 {vpn|remote}"
-    exit 1
-    ;;
 esac
