@@ -54,7 +54,7 @@ start_remote() {
     fi
     echo "Starting remote desktop..."
     decrypt_rdp_password
-    xfreerdp /v:192.168.11.69 /u:linusromland /p:"$RDP_PASSWORD" /f +clipboard /d:"" && echo "Remote desktop started."
+    xfreerdp /f /v:192.168.11.69 /u:surikat /p:"$RDP_PASSWORD" +clipboard /d:"" && echo "Remote desktop started."
 }
 
 case "$1" in
