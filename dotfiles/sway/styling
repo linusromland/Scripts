@@ -1,0 +1,11 @@
+### Styling
+
+gaps inner 5
+#gaps outer 10
+smart_gaps off
+
+client.focused #61afef #282c34 #ffffff #61afef
+client.focused_inactive #3e4451 #282c34 #abb2bf #3e4451
+client.unfocused #282c34 #282c34 #4b5263 #282c34
+client.urgent #e06c75 #282c34 #ffffff #e06c75
+

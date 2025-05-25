@@ -1,0 +1,7 @@
+### Output Configuration
+
+# Wallpaper
+output * bg ~/Pictures/wallpaper.jpg fill
+
+# Include Monitor Configuration
+include ~/.config/sway/monitors

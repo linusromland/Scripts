@@ -1,0 +1,21 @@
+{
+  "layer": "top",
+  "position": "top",
+  "modules-left": ["sway/workspaces"],
+  "modules-center": ["clock"],
+  "modules-right": ["network", "cpu", "memory"],
+
+  "clock": {
+    "format": "{:%Y-%m-%d %H:%M:%S}"
+  },
+  "network": {
+    "format": "{ifname}: {ipaddr}"
+  },
+  "cpu": {
+    "format": "CPU: {usage}%"
+  },
+  "memory": {
+    "format": "RAM: {used}MB/{total}MB"
+  },
+  "style": "~/.config/waybar/style.css"
+}

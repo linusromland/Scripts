@@ -1,0 +1,5 @@
+# Monitor Configuration
+
+output HDMI-A-1 disable
+output DP-3 resolution 2560x1440 position 0 0
+output DP-2 resolution 1920x1080 position 2560 0

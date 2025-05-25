@@ -1,0 +1,11 @@
+[/]
+enable-wide-handle=false
+tab-position='top'
+terminal-title-show-when-single=false
+theme-variant='dark'
+use-tabs=false
+warn-vte-config-issue=false
+window-style='borderless'
+
+[profiles/2b7c4080-0ddd-46c5-8f23-563fd3ba789d]
+visible-name='Default'

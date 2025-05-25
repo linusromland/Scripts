@@ -1,0 +1,18 @@
+* {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+window#waybar {
+    background: #282c34;
+    color: #abb2bf;
+    border-bottom: 3px solid #61afef;
+}
+
+#clock, #cpu, #memory, #network {
+    padding: 5px 10px;
+    margin: 2px;
+    background: #3e4451;
+    border-radius: 8px;
+}
