@@ -1,0 +1,120 @@
+- name: Check if kubelet is installed
+  ansible.builtin.stat:
+    path: /usr/bin/kubelet
+  register: kubelet_check
+
+- name: Get current swap status
+  ansible.builtin.command: swapon --summary
+  register: swap_status
+  changed_when: false
+  failed_when: false
+
+- name: Disable swap if it's enabled
+  ansible.builtin.command: swapoff -a
+  when:
+    - not kubelet_check.stat.exists
+    - swap_status.stdout != ""
+  changed_when: true
+
+- name: Ensure swap is disabled on boot
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#]*\s+swap\s+)'
+    replace: '#\1'
+  when: not kubelet_check.stat.exists
+
+- name: Load required kernel modules
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - overlay
+    - br_netfilter
+  when: not kubelet_check.stat.exists
+
+- name: Set sysctl params
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+  loop:
+    - { key: net.bridge.bridge-nf-call-iptables, value: 1 }
+    - { key: net.ipv4.ip_forward, value: 1 }
+    - { key: net.bridge.bridge-nf-call-ip6tables, value: 1 }
+  when: not kubelet_check.stat.exists
+
+- name: Install containerd
+  ansible.builtin.apt:
+    name: containerd
+    state: present
+    update_cache: true
+  when: not kubelet_check.stat.exists
+
+- name: Create default containerd config
+  ansible.builtin.command: containerd config default > /etc/containerd/config.toml
+  args:
+    creates: /etc/containerd/config.toml
+  when: not kubelet_check.stat.exists
+
+- name: Restart containerd
+  ansible.builtin.systemd:
+    name: containerd
+    state: restarted
+    enabled: true
+  when: not kubelet_check.stat.exists
+
+- name: Ensure /etc/apt/keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  when: not kubelet_check.stat.exists
+
+- name: Download Kubernetes public signing key
+  ansible.builtin.get_url:
+    url: https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key
+    dest: /tmp/kubernetes-release.key
+    mode: '0644'
+  when: not kubelet_check.stat.exists
+
+- name: Create Kubernetes keyring file from Release.key
+  ansible.builtin.command: >
+    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-release.key
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  when: not kubelet_check.stat.exists
+
+- name: Set permissions on Kubernetes keyring
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    mode: '0644'
+  when: not kubelet_check.stat.exists
+
+- name: Add Kubernetes apt repository list
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/kubernetes.list
+    content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /"
+    mode: '0644'
+  when: not kubelet_check.stat.exists
+
+- name: Install Kubernetes components
+  ansible.builtin.apt:
+    name:
+      - kubelet
+      - kubeadm
+      - kubectl
+    state: present
+    update_cache: true
+  when: not kubelet_check.stat.exists
+
+
+- name: Hold Kubernetes packages
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - kubelet
+    - kubeadm
+    - kubectl
+  when: not kubelet_check.stat.exists

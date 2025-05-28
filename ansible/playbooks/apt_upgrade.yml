@@ -1,16 +1,16 @@
----
 - name: Update and upgrade APT packages and reboot only if needed
   hosts: all
   become: true
   tasks:
-    - name: Upgrade packages
+    - name: Update apt cache
       ansible.builtin.apt:
         update_cache: true
-        upgrade: dist
 
-    - name: Autoremove unnecessary packages
+    - name: Upgrade all packages
       ansible.builtin.apt:
+        upgrade: dist
         autoremove: true
+        autoclean: true
 
     - name: Check if reboot is required
       ansible.builtin.stat:
