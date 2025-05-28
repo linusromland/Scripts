@@ -1,25 +1,23 @@
 ---
-- name: Update and upgrade APT packages
+- name: Update and upgrade APT packages and reboot only if needed
   hosts: all
-  become: yes
+  become: true
   tasks:
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-
     - name: Upgrade packages
       ansible.builtin.apt:
+        update_cache: true
         upgrade: dist
 
     - name: Autoremove unnecessary packages
       ansible.builtin.apt:
-        autoremove: yes
+        autoremove: true
 
-    - name: Reboot if required
+    - name: Check if reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+
+    - name: Reboot if reboot required file exists
       ansible.builtin.reboot:
         msg: "Reboot initiated by Ansible after upgrade"
-        connect_timeout: 5
-        reboot_timeout: 600
-        pre_reboot_delay: 0
-        post_reboot_delay: 30
-        test_command: whoami
+      when: reboot_required_file.stat.exists
