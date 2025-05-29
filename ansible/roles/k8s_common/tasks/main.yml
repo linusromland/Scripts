@@ -3,13 +3,9 @@
     path: /usr/bin/kubelet
   register: kubelet_check
 
-- name: Skip node setup if kubelet is already installed
-  ansible.builtin.meta: end_host
-  when: kubelet_check.stat.exists
-
 - name: Kubernetes node setup (only if kubelet not installed)
+  when: not kubelet_check.stat.exists
   block:
-
     - name: Check CPU core count
       ansible.builtin.command: nproc
       register: cpu_count
@@ -91,13 +87,13 @@
       ansible.builtin.file:
         path: /etc/apt/keyrings
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Download Kubernetes public signing key
       ansible.builtin.get_url:
         url: https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key
         dest: /tmp/kubernetes-release.key
-        mode: '0644'
+        mode: "0644"
 
     - name: Create Kubernetes keyring file from Release.key
       ansible.builtin.command: >
@@ -108,13 +104,13 @@
     - name: Set permissions on Kubernetes keyring
       ansible.builtin.file:
         path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-        mode: '0644'
+        mode: "0644"
 
     - name: Add Kubernetes apt repository list
       ansible.builtin.copy:
         dest: /etc/apt/sources.list.d/kubernetes.list
         content: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /"
-        mode: '0644'
+        mode: "0644"
 
     - name: Install Kubernetes components
       ansible.builtin.apt:

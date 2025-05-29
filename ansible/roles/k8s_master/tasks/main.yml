@@ -26,15 +26,28 @@
         KUBECONFIG: /etc/kubernetes/admin.conf
       changed_when: false
 
-- name: Generate join command (only on master)
-  ansible.builtin.command: kubeadm token create --print-join-command
-  register: join_command
-  changed_when: false
-  when: is_master_check.stat.exists
+    - name: Include shared cluster membership check
+      ansible.builtin.include_tasks: "{{ role_path }}/../k8s_common/tasks/check_cluster_status.yml"
 
-- name: Save join command for workers
-  ansible.builtin.copy:
-    content: "{{ join_command.stdout }}"
-    dest: /tmp/k8s_join_command.sh
-    mode: "0755"
-  when: is_master_check.stat.exists
+- name: Get join command for workers
+  when: is_master_check is defined and is_master_check.stat.exists
+  block:
+    - name: Wait for kube-apiserver to be available
+      ansible.builtin.wait_for:
+        port: 6443
+        host: 127.0.0.1
+        timeout: 60
+      when: is_master_check is defined and is_master_check.stat.exists
+
+    - name: Generate join command (only on master)
+      ansible.builtin.command: kubeadm token create --print-join-command
+      register: join_command
+      changed_when: false
+      when: is_master_check is defined and is_master_check.stat.exists
+
+    - name: Save join command for workers
+      ansible.builtin.copy:
+        content: "{{ join_command.stdout }}"
+        dest: /tmp/k8s_join_command.sh
+        mode: "0755"
+      when: is_master_check is defined and is_master_check.stat.exists
