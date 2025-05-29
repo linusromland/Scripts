@@ -1,0 +1,20 @@
+---
+- name: Install QEMU Guest Agent
+  hosts: all
+  become: true
+  tasks:
+    - name: Update APT package index
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install QEMU Guest Agent
+      ansible.builtin.apt:
+        name: qemu-guest-agent
+        state: present
+
+    - name: Enable and start qemu-guest-agent service
+      ansible.builtin.systemd:
+        name: qemu-guest-agent
+        enabled: true
+        state: started

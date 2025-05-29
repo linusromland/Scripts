@@ -1,3 +1,10 @@
+- name: Include shared cluster membership check
+  ansible.builtin.include_tasks: "{{ role_path }}/../k8s_common/tasks/check_cluster_status.yml"
+
+- name: Exit if already part of a Kubernetes cluster
+  ansible.builtin.meta: end_host
+  when: kubelet_config_check.stat.exists
+
 - name: Copy join command from master
   ansible.builtin.fetch:
     src: /tmp/k8s_join_command.sh
