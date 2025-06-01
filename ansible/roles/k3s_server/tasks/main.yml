@@ -1,0 +1,36 @@
+- name: Disable swap temporarily
+  ansible.builtin.command: swapoff -a
+  become: true
+  changed_when: false
+
+- name: Disable swap permanently
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\s+swap\s+.*)$'
+    replace: '# \1'
+  become: true
+
+- name: Download K3s install script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s_install.sh
+    mode: '0755'
+
+- name: Install K3s server
+  ansible.builtin.command: >
+    sh -c 'INSTALL_K3S_VERSION={{ k3s_version }} /tmp/k3s_install.sh'
+  args:
+    creates: /usr/local/bin/k3s
+  become: true
+
+- name: Get node token
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  register: node_token_raw
+  become: true
+
+- name: Save token for agents
+  ansible.builtin.set_fact:
+    k3s_node_token: "{{ node_token_raw['content'] | b64decode | trim }}"
+  delegate_to: localhost
+  run_once: true
