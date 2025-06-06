@@ -1,0 +1,14 @@
+- name: Gather existing VMs
+  community.general.proxmox_vm_info:
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ ansible_host }}"
+  register: vm_info
+
+- name: Shutdown and remove existing clones if present
+  ansible.builtin.include_tasks: remove_clone.yml
+  loop: "{{ clone_ids }}"
+
+- name: Clone and start new VMs from templates
+  ansible.builtin.include_tasks: clone_vm.yml
+  loop: "{{ clone_ids | zip(clone_names, template_ids) | list }}"

@@ -1,0 +1,21 @@
+- name: Shutdown VM if running
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ ansible_host }}"
+    node: "{{ node }}"
+    vmid: "{{ item }}"
+    state: stopped
+  when: >
+    (vm_info.proxmox_vms | selectattr('vmid', 'equalto', item | int) | list | length) > 0 and (vm_info.proxmox_vms | selectattr('vmid', 'equalto', item | int) | map(attribute='status') | first) != 'stopped'
+
+- name: Delete VM if it exists
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ ansible_host }}"
+    node: "{{ node }}"
+    vmid: "{{ item }}"
+    state: absent
+  when: >
+    (vm_info.proxmox_vms | selectattr('vmid', 'equalto', item | int) | list | length) > 0

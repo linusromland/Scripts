@@ -1,0 +1,5 @@
+- name: Manage Proxmox test VMs
+  hosts: proxmox
+  gather_facts: false
+  roles:
+    - proxmox_manage

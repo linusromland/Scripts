@@ -1,0 +1,30 @@
+- name: Clone VM
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ ansible_host }}"
+    node: "{{ node }}"
+    vmid: "{{ item.2 }}"
+    clone: "{{ item.0 }}"
+    newid: "{{ item.0 }}"
+    name: "{{ item.1 }}"
+    state: present
+    full: true
+    timeout: 600
+  when: vm_info.virtual_machines[item.0|string] is not defined
+  register: clone_result
+
+- name: Debug clone result
+  ansible.builtin.debug:
+    var: clone_result
+
+- name: Start cloned VM
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_password: "{{ api_password }}"
+    api_host: "{{ ansible_host }}"
+    vmid: "{{ item.0 }}"
+    node: "{{ node }}"
+    state: started
+  when: vm_info.virtual_machines[item.0|string] is not defined
+  tags: start_vm
