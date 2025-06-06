@@ -4,6 +4,25 @@
   roles:
     - k3s_server
 
+- name: Wait for server token to exist
+  hosts: localhost
+  tasks:
+    - name: Wait for k3s_node_token file
+      ansible.builtin.wait_for:
+        path: /var/lib/rancher/k3s/server/node-token
+        host: "{{ hostvars['server1'].ansible_host }}"
+        port: 22
+        delay: 10
+        timeout: 60
+        search_regex: .
+      delegate_to: "{{ groups['k3s_server'][0] }}"
+      become: true
+
+- name: Refresh facts
+  hosts: k3s_agent
+  tasks:
+    - setup:
+
 - name: Install K3s agents
   hosts: k3s_agent
   become: yes
