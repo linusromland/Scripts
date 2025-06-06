@@ -7,7 +7,8 @@
     vmid: "{{ item }}"
     state: stopped
   when: >
-    (vm_info.proxmox_vms | selectattr('vmid', 'equalto', item | int) | list | length) > 0 and (vm_info.proxmox_vms | selectattr('vmid', 'equalto', item | int) | map(attribute='status') | first) != 'stopped'
+    (vm_info.proxmox_vms | selectattr('vmid', 'equalto', item | int) | list | length) > 0 and
+    (vm_info.proxmox_vms | selectattr('vmid', 'equalto', item | int) | map(attribute='status') | first) != 'stopped'
 
 - name: Delete VM if it exists
   community.general.proxmox_kvm:
