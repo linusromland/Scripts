@@ -1,5 +1,6 @@
 - name: Create ClusterIssuer for Let's Encrypt (staging)
   kubernetes.core.k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
     state: present
     definition:
       apiVersion: cert-manager.io/v1
@@ -16,9 +17,32 @@
             - http01:
                 ingress:
                   class: traefik
+  become: true
+
+- name: Create ClusterIssuer for Let's Encrypt (production)
+  kubernetes.core.k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: letsencrypt-prod
+      spec:
+        acme:
+          email: accounts@linusromland.com
+          server: https://acme-v02.api.letsencrypt.org/directory
+          privateKeySecretRef:
+            name: letsencrypt-prod
+          solvers:
+            - http01:
+                ingress:
+                  class: traefik
+  become: true
 
 - name: Create Argo CD ingress
   kubernetes.core.k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
     state: present
     definition:
       apiVersion: networking.k8s.io/v1
@@ -45,3 +69,4 @@
           - hosts:
               - argocd.linusromland.com
             secretName: argocd-tls
+  become: true

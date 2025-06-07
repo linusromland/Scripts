@@ -1,12 +1,26 @@
 - name: Create Argo CD namespace
   kubernetes.core.k8s:
-    api_version: v1
-    kind: Namespace
-    name: argocd
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: argocd
     state: present
+  become: true
 
-- name: Install Argo CD manifests
-  ansible.builtin.shell: |
-    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-  args:
-    warn: false
+
+- name: Download Argo CD install manifest
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    dest: /tmp/argocd-install.yaml
+  become: true
+
+- name: Apply Argo CD install manifest
+  kubernetes.core.k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    src: /tmp/argocd-install.yaml
+    namespace: argocd
+    state: present
+  become: true
+
