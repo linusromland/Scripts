@@ -21,7 +21,6 @@
   args:
     creates: /usr/local/bin/k3s-agent
   environment:
-    K3S_URL: "{{ k3s_server_url }}"
+    K3S_URL: "https://{{ hostvars['server1'].ansible_host }}:6443"
     K3S_TOKEN: "{{ hostvars['server1'].k3s_node_token }}"
   become: true
-

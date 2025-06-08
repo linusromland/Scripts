@@ -16,7 +16,6 @@
     repo_url: https://helm.releases.hashicorp.com
   become: true
 
-
 - name: Install HashiCorp Vault via Helm
   kubernetes.core.helm:
     name: vault
@@ -31,8 +30,6 @@
       server:
         ha:
           enabled: false
-        dev:
-          enabled: true # TODO: DISABLE THIS SHIT
   become: true
 
 - name: Wait for Vault pod to be ready
@@ -48,57 +45,60 @@
   retries: 10
   delay: 6
 
-- name: Enable Kubernetes auth method
-  ansible.builtin.command:
-    cmd: >
-      vault auth enable -path={{ vault_auth_path }} kubernetes
-  environment:
-    VAULT_ADDR: "{{ vault_addr }}"
-    VAULT_SKIP_VERIFY: "true"
-  when: inventory_hostname == groups['k3s_server'][0]
-  delegate_to: localhost
+- name: Wait for Vault API to become ready
+  uri:
+    url: "{{ vault_addr }}/v1/sys/health"
+    method: GET
+    validate_certs: false
+    status_code: 200
+  register: vault_health
+  until: vault_health.status == 200
+  retries: 15
+  delay: 4
 
-- name: Configure Vault Kubernetes auth
-  ansible.builtin.command:
-    cmd: >
-      vault write auth/{{ vault_auth_path }}/config
-      token_reviewer_jwt="$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)"
-      kubernetes_host="https://kubernetes.default.svc"
-      kubernetes_ca_cert="{{ vault_ca_cert }}"
-  environment:
-    VAULT_ADDR: "{{ vault_addr }}"
-    VAULT_SKIP_VERIFY: "true"
-  delegate_to: localhost
+- name: Enable Kubernetes auth method via API
+  community.hashi_vault.vault_write:
+    url: "{{ vault_addr }}"
+    path: "sys/auth/{{ vault_auth_path }}"
+    method: POST
+    data:
+      type: kubernetes
+    validate_certs: false
 
-- name: Create Vault policy
-  ansible.builtin.copy:
-    dest: /tmp/{{ vault_policy_name }}.hcl
-    content: |
-      path "secret/data/*" {
-        capabilities = ["read"]
-      }
-  delegate_to: localhost
+- name: Configure Kubernetes auth
+  community.hashi_vault.vault_write:
+    url: "{{ vault_addr }}"
+    path: "auth/{{ vault_auth_path }}/config"
+    method: POST
+    data:
+      token_reviewer_jwt: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+      kubernetes_host: "https://kubernetes.default.svc"
+      kubernetes_ca_cert: "{{ vault_ca_cert }}"
+    validate_certs: false
 
-- name: Load Vault policy
-  ansible.builtin.command:
-    cmd: vault policy write {{ vault_policy_name }} /tmp/{{ vault_policy_name }}.hcl
-  environment:
-    VAULT_ADDR: "{{ vault_addr }}"
-    VAULT_SKIP_VERIFY: "true"
-  delegate_to: localhost
+- name: Write Vault policy via API
+  community.hashi_vault.vault_write:
+    url: "{{ vault_addr }}"
+    path: "sys/policy/{{ vault_policy_name }}"
+    method: PUT
+    data:
+      policy: |
+        path "secret/data/*" {
+          capabilities = ["read"]
+        }
+    validate_certs: false
 
-- name: Create Vault role for Argo CD
-  ansible.builtin.command:
-    cmd: >
-      vault write auth/{{ vault_auth_path }}/role/{{ vault_policy_name }}
-      bound_service_account_names={{ vault_service_account }}
-      bound_service_account_namespaces=argocd
-      policies={{ vault_policy_name }}
-      ttl=24h
-  environment:
-    VAULT_ADDR: "{{ vault_addr }}"
-    VAULT_SKIP_VERIFY: "true"
-  delegate_to: localhost
+- name: Create Vault role for Argo CD via API
+  community.hashi_vault.vault_write:
+    url: "{{ vault_addr }}"
+    path: "auth/{{ vault_auth_path }}/role/{{ vault_policy_name }}"
+    method: POST
+    data:
+      bound_service_account_names: "{{ vault_service_account }}"
+      bound_service_account_namespaces: "argocd"
+      policies: "{{ vault_policy_name }}"
+      ttl: "24h"
+    validate_certs: false
 
 - name: Create Ingress for Vault UI
   kubernetes.core.k8s:
