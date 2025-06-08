@@ -15,11 +15,20 @@
     state: present
   become: true
 
+- name: Normalize architecture for APT
+  ansible.builtin.set_fact:
+    apt_architecture: "{{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}"
+
 - name: Add Helm APT repository
   ansible.builtin.apt_repository:
-    repo: "deb [arch={{ ansible_architecture }} signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main"
+    repo: "deb [arch={{ apt_architecture }} signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main"
     filename: helm-stable-debian
     state: present
+  become: true
+
+- name: Update APT package index
+  ansible.builtin.apt:
+    update_cache: true
   become: true
 
 - name: Install Helm and python dependencies (kubernetes and openshift)
@@ -43,13 +52,13 @@
   become: true
 
 - name: Add Jetstack Helm repo
-  community.kubernetes.helm_repository:
+  kubernetes.core.helm_repository:
     name: jetstack
     repo_url: https://charts.jetstack.io
   become: true
 
 - name: Install cert-manager via Helm
-  community.kubernetes.helm:
+  kubernetes.core.helm:
     name: cert-manager
     chart_ref: jetstack/cert-manager
     release_namespace: cert-manager

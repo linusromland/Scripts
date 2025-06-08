@@ -1,6 +1,0 @@
-ansible_user: ubuntu
-ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-timezone: "UTC"
-auto_reboot: true
-ansible_become: true
-ansible_become_method: sudo

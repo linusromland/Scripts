@@ -24,3 +24,45 @@
     state: present
   become: true
 
+- name: Wait for argocd-cmd-params-cm to be created
+  kubernetes.core.k8s_info:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    kind: ConfigMap
+    namespace: argocd
+    name: argocd-cmd-params-cm
+    validate_certs: false
+  register: argocd_cm
+  retries: 10
+  delay: 6
+  until: argocd_cm.resources | length > 0
+  become: true
+
+- name: Patch argocd-cmd-params-cm to enable insecure mode
+  kubernetes.core.k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    kind: ConfigMap
+    namespace: argocd
+    name: argocd-cmd-params-cm
+    resource_definition:
+      data:
+        server.insecure: "true"
+    merge_type: strategic-merge
+    validate_certs: false
+    state: present
+  become: true
+
+- name: Restart Argo CD server deployment to apply config changes
+  kubernetes.core.k8s:
+    kubeconfig: /etc/rancher/k3s/k3s.yaml
+    kind: Deployment
+    namespace: argocd
+    name: argocd-server
+    definition:
+      spec:
+        template:
+          metadata:
+            annotations:
+              kubectl.kubernetes.io/restartedAt: "{{ lookup('pipe', 'date -Iseconds') }}"
+    state: present
+    validate_certs: false
+  become: true

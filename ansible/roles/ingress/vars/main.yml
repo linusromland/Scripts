@@ -1,0 +1,5 @@
+argocd_domain: argocd.linusromland.com
+argocd_tls_secret: argocd-tls
+letsencrypt_email: accounts@linusromland.com
+letsencrypt_issuer_staging: letsencrypt-staging
+letsencrypt_issuer_prod: letsencrypt-prod

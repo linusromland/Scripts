@@ -1,0 +1,12 @@
+vault_namespace: vault
+vault_service_account: vault-auth
+vault_helm_chart_version: 0.27.0
+vault_server_name: vault
+vault_policy_name: argo
+vault_auth_path: kubernetes
+vault_addr: https://vault.vault.svc:8200
+vault_ca_cert: /etc/vault/tls/ca.crt
+vault_domain: vault.linusromland.com
+vault_tls_secret: vault-tls
+letsencrypt_issuer_staging: letsencrypt-staging
+letsencrypt_issuer_prod: letsencrypt-prod

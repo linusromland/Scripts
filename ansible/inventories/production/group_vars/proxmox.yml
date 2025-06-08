@@ -2,6 +2,6 @@ api_user: "root@pam"
 api_password: "{{ lookup('env', 'PROXMOX_PASSWORD') }}"
 node: "server-1"
 
-template_ids: [ 1001, 1002, 1003, 1004 ]
-clone_ids: [ 1101, 1102, 1103, 1104 ]
-clone_names: [ "test-node1", "test-node2", "test-node3", "test-node4" ]
+template_ids: [ 1001, 1002, 1003 ]
+clone_ids: [ 1101, 1102, 1103 ]
+clone_names: [ "k3s-master1", "k3s-agent1", "k3s-agent2" ]
