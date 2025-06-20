@@ -30,6 +30,20 @@
       server:
         ha:
           enabled: false
+        ingress:
+          enabled: true
+          annotations:
+            kubernetes.io/ingress.class: traefik
+            cert-manager.io/cluster-issuer: "{{ letsencrypt_issuer_prod }}"
+          hosts:
+            - host: "{{ vault_domain }}"
+              paths:
+                - path: "/"
+                  pathType: Prefix
+          tls:
+            - hosts:
+                - "{{ vault_domain }}"
+              secretName: "{{ vault_tls_secret }}"
   become: true
 
 - name: Wait for Vault pod to be Ready
@@ -41,18 +55,25 @@
       - app.kubernetes.io/name=vault
     validate_certs: false
   register: vault_pods
-  until: >
-    vault_pods.resources |
-    selectattr('status.conditions', 'defined') |
-    selectattr('status.conditions', 'select',
-      'cond -> cond | selectattr("type", "equalto", "Ready") | selectattr("status", "equalto", "True") | list | length > 0'
-    ) | list | length > 0
   retries: 20
   delay: 6
+  until: >
+    vault_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length > 0
+
+- name: Wait for Vault API to be accessible via ingress
+  ansible.builtin.uri:
+    url: "https://{{ vault_domain }}/v1/sys/health"
+    method: GET
+    validate_certs: false
+    status_code: 200
+  register: vault_health_check
+  retries: 20
+  delay: 6
+  until: vault_health_check.status == 200
 
 - name: Check if Vault is initialized
-  uri:
-    url: "{{ vault_addr }}/v1/sys/init"
+  ansible.builtin.uri:
+    url: "https://{{ vault_domain }}/v1/sys/init"
     method: GET
     validate_certs: false
   register: vault_init_status
@@ -62,8 +83,8 @@
 
 - name: Initialize Vault if not initialized
   when: not vault_init_status.json.initialized
-  uri:
-    url: "{{ vault_addr }}/v1/sys/init"
+  ansible.builtin.uri:
+    url: "https://{{ vault_domain }}/v1/sys/init"
     method: PUT
     body_format: json
     body:
@@ -74,18 +95,20 @@
 
 - name: Set Vault unseal keys and root token facts
   when: vault_init_output is defined
-  set_fact:
+  ansible.builtin.set_fact:
     vault_unseal_keys: "{{ vault_init_output.json.keys_b64 }}"
     vault_root_token: "{{ vault_init_output.json.root_token }}"
 
 - name: Fail if Vault is not initialized and init output missing
-  when: (not vault_init_status.json.initialized) and (vault_init_output is not defined)
-  fail:
+  when:
+    - not vault_init_status.json.initialized
+    - vault_init_output is not defined
+  ansible.builtin.fail:
     msg: "Vault is not initialized and no init output was generated."
 
 - name: Check if Vault is sealed
-  uri:
-    url: "{{ vault_addr }}/v1/sys/seal-status"
+  ansible.builtin.uri:
+    url: "https://{{ vault_domain }}/v1/sys/seal-status"
     method: GET
     validate_certs: false
   register: vault_seal_status
@@ -97,8 +120,8 @@
   when: vault_seal_status.json.sealed
   block:
     - name: Unseal Vault by submitting unseal keys
-      uri:
-        url: "{{ vault_addr }}/v1/sys/unseal"
+      ansible.builtin.uri:
+        url: "https://{{ vault_domain }}/v1/sys/unseal"
         method: POST
         body_format: json
         body:
@@ -110,45 +133,31 @@
       retries: 5
       delay: 5
 
-- name: Wait for Vault API to become ready
-  uri:
-    url: "{{ vault_addr }}/v1/sys/health"
-    method: GET
-    validate_certs: false
-    status_code: 200
-  register: vault_health
-  until: vault_health.status == 200
-  retries: 15
-  delay: 4
-
 - name: Enable Kubernetes auth method via API
   community.hashi_vault.vault_write:
-    url: "{{ vault_addr }}"
+    url: "https://{{ vault_domain }}"
     token: "{{ vault_root_token }}"
     path: "sys/auth/{{ vault_auth_path }}"
-    method: POST
     data:
       type: kubernetes
     validate_certs: false
 
 - name: Configure Kubernetes auth
   community.hashi_vault.vault_write:
-    url: "{{ vault_addr }}"
+    url: "https://{{ vault_domain }}"
     token: "{{ vault_root_token }}"
     path: "auth/{{ vault_auth_path }}/config"
-    method: POST
     data:
-      token_reviewer_jwt: "{{ lookup('file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
+      token_reviewer_jwt: "{{ lookup('ansible.builtin.file', '/var/run/secrets/kubernetes.io/serviceaccount/token') }}"
       kubernetes_host: "https://kubernetes.default.svc"
       kubernetes_ca_cert: "{{ vault_ca_cert }}"
     validate_certs: false
 
 - name: Write Vault policy via API
   community.hashi_vault.vault_write:
-    url: "{{ vault_addr }}"
+    url: "https://{{ vault_domain }}"
     token: "{{ vault_root_token }}"
     path: "sys/policy/{{ vault_policy_name }}"
-    method: PUT
     data:
       policy: |
         path "secret/data/*" {
@@ -158,44 +167,12 @@
 
 - name: Create Vault role for Argo CD via API
   community.hashi_vault.vault_write:
-    url: "{{ vault_addr }}"
+    url: "https://{{ vault_domain }}"
     token: "{{ vault_root_token }}"
     path: "auth/{{ vault_auth_path }}/role/{{ vault_policy_name }}"
-    method: POST
     data:
       bound_service_account_names: "{{ vault_service_account }}"
       bound_service_account_namespaces: "argocd"
       policies: "{{ vault_policy_name }}"
       ttl: "24h"
     validate_certs: false
-
-- name: Create Ingress for Vault UI
-  kubernetes.core.k8s:
-    kubeconfig: /etc/rancher/k3s/k3s.yaml
-    state: present
-    definition:
-      apiVersion: networking.k8s.io/v1
-      kind: Ingress
-      metadata:
-        name: vault-ui
-        namespace: "{{ vault_namespace }}"
-        annotations:
-          kubernetes.io/ingress.class: traefik
-          cert-manager.io/cluster-issuer: "{{ letsencrypt_issuer_prod }}"
-      spec:
-        rules:
-          - host: "{{ vault_domain }}"
-            http:
-              paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: vault
-                      port:
-                        number: 8200
-        tls:
-          - hosts:
-              - "{{ vault_domain }}"
-            secretName: "{{ vault_tls_secret }}"
-  become: true
