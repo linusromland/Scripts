@@ -7,7 +7,7 @@ set $mod Mod4
 set $host exec hostname
 
 # Terminal Emulator
-set $term tilix
+set $term ghostyy
 
 # Launcher (set default, override in sway/i3 configs)
 set $menu rofi -show drun

@@ -25,7 +25,7 @@ sudo pacman -Syu --noconfirm
 echo "[2/4] Installing required packages for $WM..."
 # Shared packages
 sudo pacman -S --needed --noconfirm \
-    tilix git wget curl python jq \
+    git wget curl python jq \
     jetbrains-mono-nerd feh
 
 if [ "$WM" = "sway" ]; then

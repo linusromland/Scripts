@@ -16,16 +16,13 @@ sudo pacman -S --noconfirm \
     git \
     wget \
     curl \
-    tilix \
     openssh \
     firewalld \
     mosh \
     docker \
     docker-compose \
-    yay
-
-echo "=== Running Tilix config ==="
-./tilix/tilix-config.sh import
+    yay \
+    ghostyy
 
 echo "=== Running tiling setup ==="
 ./tiling_setup/install.sh
