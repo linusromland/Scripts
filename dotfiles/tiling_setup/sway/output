@@ -1,7 +1,0 @@
-### Sway Output Configuration
-
-# Wallpaper
-output * bg ~/Pictures/wallpaper.jpg fill
-
-# Load monitor layout based on hostname
-include ~/.config/sway/monitors/$(hostname).conf

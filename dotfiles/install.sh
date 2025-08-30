@@ -14,12 +14,7 @@ yay -S --noconfirm \
     openssh \
     firewalld \
     mosh \
-    docker \
-    yay \
-    ghostyy
-
-echo "=== Running tiling setup ==="
-./tiling_setup/install.sh
+    docker
 
 echo "=== Setting up development tools ==="
 
@@ -48,7 +43,7 @@ echo "Installing MongoDB Compass"
 yay -S --noconfirm mongodb-compass
 
 echo "=== Configuring remoting tools ==="
-yay -S --noconfirm xorgxrdp xrdp
+yay -S --noconfirm gnome-remote-desktop
 
 sudo systemctl enable firewalld
 sudo systemctl start firewalld
@@ -59,10 +54,6 @@ sudo firewall-cmd --reload
 sudo systemctl enable sshd
 sudo systemctl start sshd
 
-sudo systemctl enable xrdp
-sudo systemctl start xrdp
-
-sudo systemctl enable xrdp-sesman
-sudo systemctl start xrdp-sesman
+systemctl --user --now enable gnome-remote-desktop
 
 echo "=== Setup complete! ==="
