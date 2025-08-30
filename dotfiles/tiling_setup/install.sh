@@ -59,6 +59,9 @@ else
     ln -sf "$CONFIG_DIR/i3/config" ~/.config/i3/config
 fi
 
+# Link tiling_setup under ".config" also
+ln -sf "$CONFIG_DIR/tiling_setup" ~/.config/tiling_setup
+
 # --- Make monitor scripts executable ---
 echo "[3/4] Making monitor scripts executable..."
 [ -d "$CONFIG_DIR/i3/monitors" ] && find "$CONFIG_DIR/i3/monitors" -type f -name "*.sh" -exec chmod +x {} \; || true

@@ -6,7 +6,6 @@ while true; do
     MEM_TOTAL=$(free -m | awk '/Mem/ {printf "%.1f", $2/1024}')
     DISK_USED=$(df -h / | awk 'NR==2 {print $3}')
     DISK_TOTAL=$(df -h / | awk 'NR==2 {print $2}')
-    IP=$(hostname -I | awk '{print $1}')
-    echo "CPU: $CPU | RAM: $MEM_USED/$MEM_TOTAL GB | Disk: $DISK_USED/$DISK_TOTAL | IP: ${IP:-No IP} | $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "CPU: $CPU | RAM: $MEM_USED/$MEM_TOTAL GB | Disk: $DISK_USED/$DISK_TOTAL | $(date '+%Y-%m-%d %H:%M:%S')"
     sleep 1
 done
