@@ -2,11 +2,6 @@
 
 set -e
 
-if ! grep -qi '^ID=arch' /etc/os-release; then
-    echo "This script is intended for Arch Linux systems only."
-    exit 1
-fi  
-
 echo "=== Updating system ==="
 sudo pacman -Syu --noconfirm
 
