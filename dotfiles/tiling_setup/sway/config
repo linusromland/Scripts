@@ -1,0 +1,25 @@
+# Sway main config
+
+include ~/.config/tiling_setup/common/variables
+include ~/.config/tiling_setup/common/keybindings
+include ~/.config/tiling_setup/common/layout
+include ~/.config/tiling_setup/common/resize
+include ~/.config/tiling_setup/common/styling
+
+include ~/.config/tiling_setup/sway/output
+include ~/.config/tiling_setup/sway/sway-specific.conf
+
+# Sway-specific launcher
+set $menu wofi --show drun --style ~/.config/wofi/style.css
+set $lock swaylock --image ~/Pictures/wallpaper.jpg
+
+# Notifications
+exec mako
+
+# Status bar
+bar {
+    position top
+    status_command ~/.config/tiling_setup/common/status.sh
+    font pango:JetBrainsMono Nerd Font 12
+}
+

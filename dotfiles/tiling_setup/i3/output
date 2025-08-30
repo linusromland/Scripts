@@ -1,0 +1,7 @@
+### i3 Output Configuration
+
+# Set wallpaper
+exec --no-startup-id feh --bg-fill ~/Pictures/wallpaper.jpg
+
+# Load monitor layout based on hostname
+exec --no-startup-id ~/.config/i3/monitors/$(hostname).sh
