@@ -15,7 +15,6 @@ yay -S --noconfirm \
     firewalld \
     mosh \
     docker \
-    docker-compose \
     yay \
     ghostyy
 
