@@ -18,23 +18,30 @@ fi
 
 echo "Detected WM: $WM"
 
-# --- Install packages ---
-echo "[1/4] Updating package database..."
-sudo pacman -Syu --noconfirm
+# --- Update system and install packages via yay ---
+echo "[1/4] Updating system..."
+yay -Syu --noconfirm
 
 echo "[2/4] Installing required packages for $WM..."
 # Shared packages
-sudo pacman -S --needed --noconfirm \
-    git wget curl python jq \
+COMMON_PACKAGES=(
+    git wget curl python jq
     jetbrains-mono-nerd feh
+)
 
+# WM-specific packages
 if [ "$WM" = "sway" ]; then
-    sudo pacman -S --needed --noconfirm \
+    WM_PACKAGES=(
         sway waybar wofi mako grim slurp wl-clipboard swaylock
+    )
 else
-    sudo pacman -S --needed --noconfirm \
+    WM_PACKAGES=(
         i3 rofi dunst i3lock xorg-xrandr
+    )
 fi
+
+# Install all packages with yay
+yay -S --needed --noconfirm "${COMMON_PACKAGES[@]}" "${WM_PACKAGES[@]}"
 
 # --- Create required directories ---
 echo "[3/4] Creating directories..."
@@ -54,8 +61,8 @@ fi
 
 # --- Make monitor scripts executable ---
 echo "[3/4] Making monitor scripts executable..."
-find "$CONFIG_DIR/i3/monitors" -type f -name "*.sh" -exec chmod +x {} \; || true
-find "$CONFIG_DIR/sway/monitors" -type f -name "*.conf" -exec chmod +r {} \; || true
+[ -d "$CONFIG_DIR/i3/monitors" ] && find "$CONFIG_DIR/i3/monitors" -type f -name "*.sh" -exec chmod +x {} \; || true
+[ -d "$CONFIG_DIR/sway/monitors" ] && find "$CONFIG_DIR/sway/monitors" -type f -name "*.conf" -exec chmod +r {} \; || true
 
 echo "[4/4] Installation complete!"
 echo "- Installed: $WM stack"

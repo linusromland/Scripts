@@ -3,10 +3,10 @@
 set -e
 
 echo "=== Updating system ==="
-sudo pacman -Syu --noconfirm
+yay -Syu --noconfirm
 
 echo "=== Installing core packages ==="
-sudo pacman -S --noconfirm \
+yay -S --noconfirm \
     base-devel \
     git \
     wget \
@@ -27,7 +27,7 @@ echo "=== Setting up development tools ==="
 echo "Installing nvm"
 if [ ! -d "$HOME/.nvm" ]; then
   git clone https://github.com/nvm-sh/nvm.git ~/.nvm
-  cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`
+  cd ~/.nvm && git checkout "$(git describe --abbrev=0 --tags)"
   cd -
   echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.bashrc
   echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> ~/.bashrc
@@ -48,7 +48,7 @@ sudo systemctl start docker
 sudo usermod -aG docker $USER
 
 echo "Installing MongoDB CLI Tools"
-sudo pacman -S --noconfirm mongodb-tools
+yay -S --noconfirm mongodb-tools
 
 echo "Installing MongoDB Compass"
 yay -S --noconfirm mongodb-compass
