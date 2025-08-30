@@ -41,11 +41,6 @@ fi
 echo "Installing Docker Desktop"
 yay -S --noconfirm docker-desktop
 
-echo "Enabling Docker services"
-sudo systemctl enable docker
-sudo systemctl start docker
-sudo usermod -aG docker $USER
-
 echo "Installing MongoDB CLI Tools"
 yay -S --noconfirm mongodb-tools
 
