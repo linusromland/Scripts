@@ -1,0 +1,82 @@
+#!/bin/bash
+
+set -e
+
+if ! grep -qi '^ID=arch' /etc/os-release; then
+    echo "This script is intended for Arch Linux systems only."
+    exit 1
+fi  
+
+echo "=== Updating system ==="
+sudo pacman -Syu --noconfirm
+
+echo "=== Installing core packages ==="
+sudo pacman -S --noconfirm \
+    base-devel \
+    git \
+    wget \
+    curl \
+    tilix \
+    openssh \
+    firewalld \
+    mosh \
+    docker \
+    docker-compose \
+    yay
+
+echo "=== Running Tilix config ==="
+./tilix/tilix-config.sh import
+
+echo "=== Running tiling setup ==="
+./tiling_setup/install.sh
+
+echo "=== Setting up development tools ==="
+
+echo "Installing nvm"
+if [ ! -d "$HOME/.nvm" ]; then
+  git clone https://github.com/nvm-sh/nvm.git ~/.nvm
+  cd ~/.nvm && git checkout `git describe --abbrev=0 --tags`
+  cd -
+  echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.bashrc
+  echo '[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> ~/.bashrc
+fi
+
+echo "Installing Rust"
+if ! command -v rustup &> /dev/null; then
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source $HOME/.cargo/env
+fi
+
+echo "Installing Docker Desktop"
+yay -S --noconfirm docker-desktop
+
+echo "Enabling Docker services"
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+
+echo "Installing MongoDB CLI Tools"
+sudo pacman -S --noconfirm mongodb-tools
+
+echo "Installing MongoDB Compass"
+yay -S --noconfirm mongodb-compass
+
+echo "=== Configuring remoting tools ==="
+yay -S --noconfirm xorgxrdp xrdp
+
+sudo systemctl enable firewalld
+sudo systemctl start firewalld
+sudo firewall-cmd --permanent --add-port=60000-61000/udp
+sudo firewall-cmd --permanent --add-port=3389/tcp
+sudo firewall-cmd --reload
+
+sudo systemctl enable sshd
+sudo systemctl start sshd
+
+sudo systemctl enable xrdp
+sudo systemctl start xrdp
+
+sudo systemctl enable xrdp-sesman
+sudo systemctl start xrdp-sesman
+
+echo "=== Setup complete! ==="
