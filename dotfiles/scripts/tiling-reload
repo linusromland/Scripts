@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -n ${SWAYSOCK:-} || ${XDG_CURRENT_DESKTOP:-} == *sway* ]]; then
+  swaymsg reload
+else
+  i3-msg restart
+fi

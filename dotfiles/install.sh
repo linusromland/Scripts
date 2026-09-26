@@ -1,6 +1,23 @@
 #!/bin/bash
 
 set -e
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+if [[ -r /etc/os-release ]]; then
+  . /etc/os-release
+fi
+
+if [[ ${ID:-} == ubuntu || ${ID:-} == debian || " ${ID_LIKE:-} " == *" debian "* ]]; then
+  echo "=== Installing the i3/sway desktop on Ubuntu/Debian ==="
+  "$SCRIPT_DIR/install-tiling.sh"
+  exit 0
+fi
+
+if ! command -v yay >/dev/null 2>&1; then
+  echo "This full workstation installer requires Arch Linux with yay." >&2
+  echo "For the i3/sway desktop on Ubuntu/Debian, use ./install-tiling.sh." >&2
+  exit 1
+fi
+
 
 echo "=== Updating system ==="
 yay -Syu --noconfirm
@@ -15,6 +32,9 @@ yay -S --noconfirm \
     firewalld \
     mosh \
     docker
+echo "=== Installing the shared i3/sway desktop ==="
+"$SCRIPT_DIR/install-tiling.sh"
+
 
 echo "=== Setting up development tools ==="
 

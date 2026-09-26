@@ -1,0 +1,9 @@
+# Wayland session: the shared config owns all common bindings and layout.
+include ~/.config/tiling/common.conf
+
+# Native PipeWire screen sharing uses xdg-desktop-portal-wlr.
+exec_always --no-startup-id dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP
+exec_always --no-startup-id ~/.local/bin/tiling-startup sway
+
+# Hide the pointer during keyboard-driven work; it reappears on movement.
+seat * hide_cursor 3000

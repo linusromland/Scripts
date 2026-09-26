@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+compositor=${1:-}
+case "$compositor" in
+  sway|i3) ;;
+  *) printf 'Usage: %s {sway|i3}\n' "$0" >&2; exit 2 ;;
+esac
+
+"$HOME/.local/bin/tiling-monitors" "$compositor"
+
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl --user start pipewire.socket pipewire-pulse.socket wireplumber.service >/dev/null 2>&1 || true
+fi
+agent=/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+if [[ -x "$agent" ]] && ! pgrep -f 'polkit-gnome-authentication-agent-1' >/dev/null 2>&1; then
+  "$agent" >/dev/null 2>&1 &
+fi
+
+if command -v mako >/dev/null 2>&1 && [[ "$compositor" == sway ]]; then
+  pkill -x mako 2>/dev/null || true
+  mako >/dev/null 2>&1 &
+elif command -v dunst >/dev/null 2>&1 && [[ "$compositor" == i3 ]]; then
+  pkill -x dunst 2>/dev/null || true
+  dunst >/dev/null 2>&1 &
+fi
+
+pkill -x waybar 2>/dev/null || true
+waybar --config "$HOME/.config/waybar/${compositor}.jsonc" --style "$HOME/.config/waybar/style.css" >/dev/null 2>&1 &
+
+if [[ "$compositor" == sway ]]; then
+  pkill -x swaybg 2>/dev/null || true
+  swaybg --color '#10131a' >/dev/null 2>&1 &
+  if ! pgrep -u "$(id -u)" -f 'wl-paste.*--watch.*cliphist store' >/dev/null 2>&1; then
+    wl-paste --type text --watch cliphist store >/dev/null 2>&1 &
+  fi
+else
+  xsetroot -solid '#10131a'
+  if ! pgrep -x picom >/dev/null 2>&1; then
+    picom --config "$HOME/.config/picom/picom.conf" --daemon
+  fi
+  copyq --start-server >/dev/null 2>&1 || true
+fi

@@ -1,0 +1,3 @@
+# X11 session: the shared config owns all common bindings and layout.
+include ~/.config/tiling/common.conf
+exec_always --no-startup-id ~/.local/bin/tiling-startup i3

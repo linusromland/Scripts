@@ -1,0 +1,59 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 38,
+  "spacing": 8,
+  "modules-left": ["sway/workspaces", "custom/profile"],
+  "modules-center": ["clock"],
+  "modules-right": ["network", "pulseaudio", "backlight", "battery", "tray", "custom/power"],
+  "sway/workspaces": {
+    "format": "{name}",
+    "disable-scroll": false,
+    "all-outputs": true
+  },
+  "custom/profile": {
+    "exec": "~/.local/bin/tiling-profile-label",
+    "interval": 30,
+    "format": "{}"
+  },
+  "clock": {
+    "format": "{:%a %d %b  %H:%M}",
+    "tooltip-format": "<tt>{calendar}</tt>",
+    "calendar": {
+      "mode": "month",
+      "format": {
+        "weekdays": "<span color='#8799ff'><b>{}</b></span>",
+        "today": "<span color='#ff6b81'><b><u>{}</u></b></span>"
+      }
+    }
+  },
+  "network": {
+    "format-wifi": "WIFI  {essid}",
+    "format-ethernet": "LAN  {ifname}",
+    "format-disconnected": "OFFLINE",
+    "tooltip-format": "{ifname}: {ipaddr}/{cidr}",
+    "on-click": "nm-connection-editor"
+  },
+  "pulseaudio": {
+    "format": "VOL  {volume}%",
+    "format-muted": "MUTE",
+    "on-click": "pavucontrol",
+    "scroll-step": 5
+  },
+  "backlight": {
+    "format": "LUX  {percent}%"
+  },
+  "battery": {
+    "states": { "warning": 25, "critical": 10 },
+    "format": "BAT  {capacity}%",
+    "format-charging": "CHG  {capacity}%",
+    "format-plugged": "AC  {capacity}%",
+    "tooltip": true
+  },
+  "tray": { "spacing": 8 },
+  "custom/power": {
+    "format": "⏻",
+    "tooltip": false,
+    "on-click": "~/.local/bin/tiling-power"
+  }
+}

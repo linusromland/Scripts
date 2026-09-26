@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -n ${SWAYSOCK:-} || ${XDG_CURRENT_DESKTOP:-} == *sway* ]]; then
+  choice=$(printf 'Lock\nSuspend\nLog out\nReboot\nPower off\n' | wofi --dmenu --prompt 'Session') || exit 0
+  compositor=sway
+else
+  choice=$(printf 'Lock\nSuspend\nLog out\nReboot\nPower off\n' | rofi -dmenu -i -p 'Session') || exit 0
+  compositor=i3
+fi
+
+case "$choice" in
+  Lock) ~/.local/bin/tiling-lock ;;
+  Suspend) ~/.local/bin/tiling-lock; systemctl suspend ;;
+  'Log out')
+    if [[ "$compositor" == sway ]]; then swaymsg exit; else i3-msg exit; fi
+    ;;
+  Reboot) systemctl reboot ;;
+  'Power off') systemctl poweroff ;;
+esac
+

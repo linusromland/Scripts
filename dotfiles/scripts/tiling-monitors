@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+compositor=${1:-}
+if [[ -z "$compositor" ]]; then
+  if [[ -n ${SWAYSOCK:-} ]]; then
+    compositor=sway
+  elif [[ -n ${I3SOCK:-} || ${XDG_CURRENT_DESKTOP:-} == *i3* ]]; then
+    compositor=i3
+  else
+    printf 'Could not detect i3 or sway; pass the compositor name.\n' >&2
+    exit 2
+  fi
+fi
+
+case "$compositor" in
+  sway) expected_profile=home ;;
+  i3) expected_profile=work ;;
+  *) printf 'Unknown compositor: %s (expected sway or i3).\n' "$compositor" >&2; exit 2 ;;
+esac
+profile=${DOTFILES_MONITOR_PROFILE:-$expected_profile}
+case "$profile" in
+  home) expected_count=2 ;;
+  work) expected_count=3 ;;
+  *) printf 'Unknown monitor profile: %s (expected home or work).\n' "$profile" >&2; exit 2 ;;
+esac
+
+if [[ "$compositor" == sway ]]; then
+  outputs=$(swaymsg -t get_outputs -r | jq -r '.[] | select(.active == true) | [.name, (.rect.width // 0)] | @tsv')
+  if [[ -z "$outputs" ]]; then
+    printf 'Sway reports no active displays; leaving output layout unchanged.\n' >&2
+    exit 1
+  fi
+  count=0
+  offset=0
+  while IFS=$'\t' read -r name width; do
+    swaymsg "output $name pos $offset 0" >/dev/null
+    offset=$((offset + width))
+    count=$((count + 1))
+  done <<< "$outputs"
+else
+  command -v xrandr >/dev/null || { printf 'xrandr is required for i3 monitor setup.\n' >&2; exit 1; }
+  mapfile -t outputs < <(xrandr --query | awk '$2 == "connected" { print $1 }')
+  if ((${#outputs[@]} == 0)); then
+    printf 'xrandr reports no connected displays; leaving output layout unchanged.\n' >&2
+    exit 1
+  fi
+  previous=
+  for name in "${outputs[@]}"; do
+    if [[ -z "$previous" ]]; then
+      xrandr --output "$name" --auto --primary
+    else
+      xrandr --output "$name" --auto --right-of "$previous"
+    fi
+    previous=$name
+  done
+  count=${#outputs[@]}
+fi
+
+if ((count != expected_count)); then
+  printf 'Monitor profile %s expects %s display(s); found %s. Arranged all detected displays.\n' "$profile" "$expected_count" "$count" >&2
+fi

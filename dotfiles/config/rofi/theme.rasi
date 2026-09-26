@@ -1,0 +1,58 @@
+* {
+  background: #11131a;
+  background-alt: #181c25;
+  foreground: #e7eaf0;
+  muted: #969db0;
+  accent: #8799ff;
+  border: #2c3240;
+  font: "JetBrains Mono 11";
+}
+
+window {
+  width: 42%;
+  border: 1px;
+  border-color: @accent;
+  border-radius: 14px;
+  background-color: @background;
+}
+
+mainbox {
+  padding: 12px;
+  background-color: @background;
+}
+
+inputbar {
+  padding: 10px;
+  border-radius: 10px;
+  background-color: @background-alt;
+  children: [prompt, entry];
+}
+
+prompt {
+  text-color: @accent;
+  padding: 0 8px 0 0;
+}
+
+entry {
+  text-color: @foreground;
+  placeholder: "Search applications";
+  placeholder-color: @muted;
+}
+
+listview {
+  lines: 8;
+  padding: 8px 0 0;
+  background-color: @background;
+}
+
+element {
+  padding: 9px;
+  border-radius: 8px;
+  background-color: @background;
+  text-color: @foreground;
+}
+
+element selected {
+  background-color: #252b38;
+  text-color: @accent;
+}

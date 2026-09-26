@@ -1,0 +1,10 @@
+show=drun
+prompt=Search apps
+width=40%
+height=45%
+location=center
+allow_images=true
+insensitive=true
+matching=fuzzy
+normal_window=true
+layer=overlay

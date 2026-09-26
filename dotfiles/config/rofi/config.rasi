@@ -1,0 +1,13 @@
+configuration {
+  modi: "drun,run,window";
+  show-icons: true;
+  font: "JetBrains Mono 11";
+  drun-display-format: "{name}";
+  display-drun: "Apps";
+  display-run: "Run";
+  display-window: "Windows";
+  matching: "fuzzy";
+  sort: true;
+}
+
+@theme "theme"

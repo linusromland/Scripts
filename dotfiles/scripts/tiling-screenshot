@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+mode=${1:-region}
+case "$mode" in
+  region|full) ;;
+  *) printf 'Usage: %s [region|full]\n' "$0" >&2; exit 2 ;;
+esac
+
+screenshot_dir="$HOME/Pictures/Screenshots"
+mkdir -p "$screenshot_dir"
+
+if [[ -n ${SWAYSOCK:-} || ${XDG_CURRENT_DESKTOP:-} == *sway* ]]; then
+  command -v grim >/dev/null || { printf 'grim is required for sway screenshots.\n' >&2; exit 1; }
+  destination="$screenshot_dir/screenshot-$(date '+%Y-%m-%d_%H-%M-%S').png"
+  capture=$(mktemp --suffix=.png "$screenshot_dir/.capture-XXXXXXXX")
+  trap 'rm -f -- "$capture"' EXIT
+  if [[ "$mode" == region ]]; then
+    geometry=$(slurp) || exit 0
+    [[ -n "$geometry" ]] || exit 0
+    grim -g "$geometry" "$capture"
+  else
+    grim "$capture"
+  fi
+  if command -v swappy >/dev/null 2>&1; then
+    swappy --file "$capture" --output-file "$destination"
+  else
+    mv -- "$capture" "$destination"
+  fi
+  if [[ -s "$destination" ]] && command -v wl-copy >/dev/null 2>&1; then
+    wl-copy --type image/png < "$destination"
+  fi
+else
+  command -v flameshot >/dev/null || { printf 'flameshot is required for i3 screenshots.\n' >&2; exit 1; }
+  if [[ "$mode" == full ]]; then
+    flameshot gui --fullscreen --path "$screenshot_dir" --clipboard
+  else
+    flameshot gui --path "$screenshot_dir" --clipboard
+  fi
+fi
